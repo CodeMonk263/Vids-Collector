@@ -7,7 +7,9 @@ Included start file is a bash script to initialize all packages and run the serv
 just run ->
 
 >> ./start 
-OR
+ 
+------- OR ---------
+ 
 >> bash start
 
 NOTE: Make sure you have npm, python, pip, and git bash installed!
