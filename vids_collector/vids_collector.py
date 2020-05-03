@@ -52,23 +52,14 @@ def get_vids(url):
         title = (title[:58] + '..') if len(title) > 60 else title
         titles.append(title)
         href = row.find("a",href=True)['href']
-        #time.sleep(2)
         sub_content = requests.get(href)
         sub_soup = BeautifulSoup(sub_content.text, 'html.parser')
         sub_links = sub_soup.find("span", {"style":"color: #000000;"}).find_all("a",href=True)
-        #print(title+"  :  ", '\n')
-        #print(sub_links[1].get_text()+" - "+sub_links[1]['href'],'\n')
         vid_link = sub_links[1]['href'] + "?download"
         hrefs.append(vid_link)
-        #print (get_src(vid_link),'\n')
 
     for row2 in rows2:
         thumbnail_src = row2.find("a",href=True).find("img")['src']
         thumbnails_src.append(thumbnail_src)
 
-    #print (titles,'\n',hrefs,'\n',thumbnails_src,'\n')
-
     return (titles, hrefs, thumbnails_src)
-
-#get_vids('https://xmoviesforyou.video/')
-#get_src('https://mixdrop.co/f/1v9qvg90u0p7e0?download')
