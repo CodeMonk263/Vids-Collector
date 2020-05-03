@@ -47,7 +47,7 @@ class App extends Component {
     try {
       // (async () => {
       // console.log("Async func");
-      const response = fetch("http://192.168.0.104:8000/api/get_links/", options);
+      const response = fetch("http://localhost:8000/api/get_links/", options);
       const status = response.status;
       console.log('👉 Returned data:', response.data === "Success" ? response.data : response.detail);
       if (status === 201) {

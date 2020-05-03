@@ -5,3 +5,4 @@ links_app/__pycache__/
 .vscode
 vids_api/__pycache__
 vids_collector/__pycache__
+**/__pycache__
