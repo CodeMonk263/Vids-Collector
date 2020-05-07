@@ -55,7 +55,7 @@ def get_vids(url):
         sub_content = requests.get(href)
         sub_soup = BeautifulSoup(sub_content.text, 'html.parser')
         sub_links = sub_soup.find("span", {"style":"color: #000000;"}).find_all("a",href=True)
-        vid_link = sub_links[1]['href'] + "?download"
+        vid_link = sub_links[0]['href'] ## + "?download"
         hrefs.append(vid_link)
 
     for row2 in rows2:
@@ -63,3 +63,21 @@ def get_vids(url):
         thumbnails_src.append(thumbnail_src)
 
     return (titles, hrefs, thumbnails_src)
+
+def get_src2(url):
+    browser = webdriver.Chrome(options=option)
+    browser.get(url)
+    # Wait 20 seconds for page to load
+    timeout = 20
+    try:
+        WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//video[@class='vjs-tech']")))
+    except TimeoutException:
+        print("Timed out waiting for page to load")
+        browser.quit()
+    
+    v = browser.find_elements_by_xpath("//video[@class='vjs-tech']")[0]
+    vid_src = v.get_attribute('src')
+    browser.close()
+    browser.quit()
+    return (vid_src)
+    

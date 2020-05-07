@@ -65,7 +65,7 @@ class DualSerializerViewSet(viewsets.ModelViewSet):
 
         if request.method == 'GET':
             video = get_object_or_404(LinksModel, pk=self.kwargs['pk'])
-            video.src = vid.get_src(video.href)
+            video.src = vid.get_src2(video.href)
             video.save()
 
             serializer = LinksDataSerializer(data=video.__dict__)
