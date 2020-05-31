@@ -37,7 +37,14 @@ class DualSerializerViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             LinksModel.objects.all().delete()
             page_num = request.data["page_num"]
-            titles, hrefs, thumbnails_src = vid.get_vids("https://xmoviesforyou.video/page/" + str(page_num))
+            search = request.data["search"]
+            search = search.split()
+            search = '+'.join(search)
+
+            if (not len(search)):
+                titles, hrefs, thumbnails_src = vid.get_vids("https://xmoviesforyou.video/page/" + str(page_num))
+            else:
+                titles, hrefs, thumbnails_src = vid.get_vids_search("https://xmoviesforyou.video/page/" + str(page_num) + "/?s=" + search)
 
             for video in zip(titles, hrefs, thumbnails_src):
                 title = video[0]

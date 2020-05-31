@@ -6,3 +6,4 @@ class LinksModel(models.Model):
     href = models.CharField(max_length=300)
     thumbnail_src = models.CharField(max_length=400, default='None')
     src = models.CharField(max_length=400, default='None')
+    search = models.CharField(max_length=30, default='None')
