@@ -26,57 +26,40 @@ class DualSerializerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def get_links(self, request, pk=None):
-        """
-        List all code snippets, or create a new snippet.
-        """
-        # if request.method == 'GET':
-        #     links = LinksModel.objects.all()
-        #     serializer = LinksDataSerializer(links, many=True)
-        #     return Response(serializer.data)
-
         if request.method == 'POST':
-            LinksModel.objects.all().delete()
             page_num = request.data["page_num"]
-            search = request.data["search"]
-            search = search.split()
-            search = '+'.join(search)
+            search_term = request.data["search"]
 
-            if (not len(search)):
-                titles, hrefs, thumbnails_src = vid.get_vids("https://xmoviesforyou.video/page/" + str(page_num))
+            titles, hrefs, thumbnails_src = vid.get_vids("https://xmoviesforyou.video/page/" + str(page_num) + "/?s=" + search_term)
+
+            if (titles != "F"):
+                LinksModel.objects.all().delete()
+                for video in zip(titles, hrefs, thumbnails_src):
+                    title = video[0]
+                    href = video[1]
+                    thumbnail_src = video[2]
+                    LinksModel.objects.create(page_num=page_num,title=title,href=href, thumbnail_src=thumbnail_src)
+
+                data = LinksModel.objects.first()
+
+                serializer = LinksDataSerializer(data=data.__dict__)
+                if serializer.is_valid():
+                    return Response("Success", status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
-                titles, hrefs, thumbnails_src = vid.get_vids_search("https://xmoviesforyou.video/page/" + str(page_num) + "/?s=" + search)
-
-            for video in zip(titles, hrefs, thumbnails_src):
-                title = video[0]
-                href = video[1]
-                thumbnail_src = video[2]
-                LinksModel.objects.create(page_num=page_num,title=title,href=href, thumbnail_src=thumbnail_src)
-
-            data = LinksModel.objects.first()
-
-            serializer = LinksDataSerializer(data=data.__dict__)
-            if serializer.is_valid():
-                serializer.save()
-                return Response("Success", status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response("Error", status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get'])
     def get_vid(self, request, pk=None):
-        """
-        List all code snippets, or create a new snippet.
-        """
-        # if request.method == 'GET':
-        #     links = LinksModel.objects.all()
-        #     serializer = LinksDataSerializer(links, many=True)
-        #     return Response(serializer.data)
-
         if request.method == 'GET':
             video = get_object_or_404(LinksModel, pk=self.kwargs['pk'])
             video.src = vid.get_src2(video.href)
-            video.save()
-
-            serializer = LinksDataSerializer(data=video.__dict__)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if (video.src != "F"):
+                video.save()
+                serializer = LinksDataSerializer(data=video.__dict__)
+                if serializer.is_valid():
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response("Error", status=status.HTTP_201_CREATED)
+            

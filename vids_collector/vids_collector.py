@@ -9,7 +9,7 @@ import time
 
 option = webdriver.ChromeOptions()
 option.add_argument(" — incognito")
-# option.add_argument("headless")
+option.add_argument("headless")
 
 def get_src(link):
 
@@ -33,7 +33,6 @@ def get_src(link):
     browser.close()
     browser.quit()
     return (vid_src)
-    #print (vid_src)
 
 def get_vids(url):
     content = requests.get(url)
@@ -43,30 +42,34 @@ def get_vids(url):
     rows = soup.find_all("h2", { "class" : "entry-title"})
     rows2 = soup.find_all("div", {"class": "grid-box-img"})
 
-    titles = []
-    hrefs = []
-    thumbnails_src = []
+    if (len(rows)):
+        titles = []
+        hrefs = []
+        thumbnails_src = []
 
-    for row in rows:
-        title = row.find("a", href=True).get_text()
-        title = (title[:58] + '..') if len(title) > 60 else title
-        titles.append(title)
-        href = row.find("a",href=True)['href']
-        sub_content = requests.get(href)
-        sub_soup = BeautifulSoup(sub_content.text, 'html.parser')
-        sub_links = sub_soup.find("span", {"style":"color: #000000;"}).find_all("a",href=True)
-        vid_link = sub_links[0]['href'] ## + "?download"
-        hrefs.append(vid_link)
+        for row in rows:
+            title = row.find("a", href=True).get_text()
+            title = (title[:58] + '..') if len(title) > 60 else title
+            titles.append(title)
+            href = row.find("a",href=True)['href']
+            sub_content = requests.get(href)
+            sub_soup = BeautifulSoup(sub_content.text, 'html.parser')
+            sub_links = sub_soup.find("span", {"style":"color: #000000;"}).find_all("a",href=True)
+            vid_link = sub_links[0]['href']
+            hrefs.append(vid_link)
 
-    for row2 in rows2:
-        thumbnail_src = row2.find("a",href=True).find("img")['src']
-        thumbnails_src.append(thumbnail_src)
+        for row2 in rows2:
+            thumbnail_src = row2.find("a",href=True).find("img")['src']
+            thumbnails_src.append(thumbnail_src)
 
-    return (titles, hrefs, thumbnails_src)
+        return (titles, hrefs, thumbnails_src)
+    else:
+        return ("F","F","F")
 
 def get_vids_search(url):
     browser = webdriver.Chrome(options=option)
     browser.get(url)
+    
     # Wait 20 seconds for page to load
     timeout = 20
     try:
@@ -74,9 +77,11 @@ def get_vids_search(url):
     except TimeoutException:
         print("Timed out waiting for page to load")
         browser.quit()
+
     soup = BeautifulSoup(browser.page_source, 'html.parser')
     browser.close()
     browser.quit()
+
 
     rows = soup.find_all("h2", { "class" : "entry-title"})
     rows2 = soup.find_all("div", {"class": "grid-box-img"})
@@ -109,22 +114,29 @@ def get_vids_search(url):
         i+=1
     
     return (titles, hrefs, thumbnails_src)
-    # print (titles, '\n', hrefs, '\n', thumbnails_src, '\n')
+
 
 
 def get_src2(url):
     browser = webdriver.Chrome(options=option)
     browser.get(url)
+    LOADED_FLAG = True
     # Wait 20 seconds for page to load
     timeout = 20
     try:
         WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//video[@class='vjs-tech']")))
     except TimeoutException:
         print("Timed out waiting for page to load")
+        LOADED_FLAG = False
         browser.quit()
-    
-    v = browser.find_elements_by_xpath("//video[@class='vjs-tech']")[0]
-    vid_src = v.get_attribute('src')
-    browser.close()
-    browser.quit()
-    return (vid_src)
+
+    if (LOADED_FLAG):
+        v = browser.find_elements_by_xpath("//video[@class='vjs-tech']")[0]
+        vid_src = v.get_attribute('src')
+        if (len(vid_src) < 50):
+            vid_src = "F"
+        browser.close()
+        browser.quit()
+        return (vid_src)
+    else:
+        return ("F")

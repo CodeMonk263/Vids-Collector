@@ -4,7 +4,7 @@ from .models import LinksModel
 class LinksRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = LinksModel
-        fields = ('page_num', 'search')
+        fields = ('page_num',)
 
     
 class LinksDataSerializer(serializers.ModelSerializer):

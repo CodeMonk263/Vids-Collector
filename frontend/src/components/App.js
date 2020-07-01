@@ -12,73 +12,71 @@ class App extends Component {
       loaded: false,
       placeholder: "Loading",
       page_num: "0",
+      search_term: ""
     };
+    this.textInput = React.createRef();
+    this.onSearchSubmit = this.onSearchSubmit.bind(this);
+    this.handlePageChange = this.handlePageChange.bind(this);
+    this.onPageSubmit = this.onPageSubmit.bind(this);
+    this.handleSearchChange = this.handleSearchChange.bind(this);
   }
 
-  GETRequest = (url) => {
-    fetch(url)
-    .then(response => {
-      if (response.status > 400) {
-        return this.setState(() => {
-          return { placeholder: "Something went wrong!" };
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      this.setState(() => {
-        return {
-          data,
-          loaded: true,
-          page_num: data[0].page_num,
-        };
-      });
-    });
+  handlePageChange(value) {
+    this.setState({page_num: value});
   }
 
-  POSTRequest = () => {
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: toString(this.state.page_num),
-    };
-    try {
-      // (async () => {
-      // console.log("Async func");
-      const response = fetch("http://localhost:8000/api/get_links/", options);
-      const status = response.status;
-      console.log('👉 Returned data:', response.data === "Success" ? response.data : response.detail);
-      if (status === 201) {
-        this.GETRequest("api/");
-      }
-    // });
-    } catch (e) {
-      console.log(`😱 Axios request failed: ${e}`);
+  onPageSubmit(event) {
+    this.POSTRequest("http://192.168.0.107:8000/api/get_links/")
+    event.preventDefault();
+  }
+
+  handleSearchChange(value) {
+    this.setState({search_term: value});
+  }
+
+  onSearchSubmit(event) {
+    this.setState({page_num: "1"});
+    this.POSTRequest("http://192.168.0.107:8000/api/get_links/");
+    this.setState({search_term: ""});
+    event.preventDefault();
+  }
+
+  GETRequest = async (url) => {
+    const request = await axios.get(url);
+    this.setState( { data: request.data, loaded: true, page_num: request.data[0].page_num });
+    console.log(this.state.page_num);
+    console.log(this.state.search_term);
+  }
+
+  POSTRequest = async (url) => {
+    this.setState({loaded: false, placeholder: "Loading"});
+    await axios.post(url,
+    {
+      "page_num": this.state.page_num,
+      "search": this.state.search_term
+    },
+    {
+    headers: {
+        'Content-Type': 'application/json'
     }
+    })
+    .then(request => {
+      if (request.data != "Error") {
+        this.GETRequest("http://192.168.0.107:8000/api/");
+      } else {
+        this.setState( { placeholder: "Error Site Crashed Please Try Again By Searching Again!" });
+      }
+    })
+    .catch(err => console.log(err))
   }
-
-  onInputChange = event => {
-    this.setState({ page_num: event.target.value });
-  };
-
-  onTermSubmit = () => {
-    this.POSTRequest();
-  };
 
   componentDidMount() {
-    this.GETRequest("api/");
+    this.GETRequest("http://192.168.0.107:8000/api/");
   };
 
   goToVideo = (video) => {
-    if (video.src === "None") {
-      history.push('/api/'+video.id+'/get_vid/');
-      window.location.assign('/api/'+video.id+'/get_vid/');
-    } else {
       history.push('/video', { id: video.id, title: video.title, src: video.src });
       window.location.assign('/video');
-    }
   };
 
   changePage = () => {
@@ -93,29 +91,48 @@ class App extends Component {
     return (
       <div className="black-bg" >
         <Container fluid>
+        <br/>
         <Row>
-        <Col xs={6} md={4}></Col>  
-        <Col xs={6} md={4}>
-        <h1 className="page-title">Vids-Hub</h1>
+        <Col></Col>  
+        <Col md="auto">
+          <img src="https://raw.githubusercontent.com/CodeMonk263/File-Repo/master/logo.png" 
+               alt="Logo"
+               height="70" width="160" />
         </Col>
-        <Col xs={6} md={4}></Col> 
+        <Col></Col> 
         </Row>
-        <Row xs={2} md={4} lg={6}><Col>
-          <Button variant="primary" 
-          className="button" 
-          onClick={this.changePage} 
-          placeholder="Page Num"
-          >Change Page</Button>
-        </Col><Col>
+        <br/>
+        <Row>
+        <Col>
+          <form onSubmit={this.onSearchSubmit}>
+              <label>
+                Search:
+                <input type="text" value={this.state.search_term} onChange={(e)=>this.handleSearchChange(e.target.value)} />
+              </label>
+              <input type="submit" value="Submit" />
+          </form>
+        </Col>  
+        <Col>
+          <form onSubmit={this.onPageSubmit}>
+            <label>
+              Page:       
+              <input type="text" value={this.state.page_num} onChange={(e)=>this.handlePageChange(e.target.value)} />
+            </label>
+            <input type="submit" value="Submit" />
+          </form>
+        </Col>
+        <Col xs lg={2}>
           <Alert variant="info">
             Page - {this.state.page_num}
           </Alert>      
         </Col>
         </Row>
+        <br/>
         </Container>
         <Container fluid>
           <Row className="row-grid">     
-              {this.state.data.map(video => {
+              {this.state.loaded ? 
+              this.state.data.map(video => {
               return (
                 <Col className="col-grid" key={video.id}>
                   <Card style={{ width: '18rem' }}>
@@ -133,7 +150,7 @@ class App extends Component {
                   </Card>
                 </Col>
               );
-            })}
+              }) : this.state.placeholder !== "Loading" ? <h2>{this.state.placeholder}</h2> : <h2>Loading...</h2>}
         </Row>
         </Container>
       </div>
